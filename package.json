@@ -10,8 +10,12 @@
   "author": "Gianluca Romeo <glromeo@gmail.com>",
   "license": "MIT",
   "private": false,
+  "dependencies": {
+    "source-map-support": "^0.5.19"
+  },
   "devDependencies": {
     "@types/node": "^16.7.10",
+    "@types/source-map-support": "^0.5.4",
     "ts-node": "^10.2.1",
     "typescript": "^4.4.2"
   },
