@@ -1,0 +1,13 @@
+{
+  "name": "little-dev-server",
+  "version": "1.0.0",
+  "description": "A simple HTTP/2 server for local development",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glromeo/little-dev-server.git"
+  },
+  "author": "Gianluca Romeo <glromeo@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
