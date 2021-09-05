@@ -11,7 +11,8 @@
   "license": "MIT",
   "private": false,
   "dependencies": {
-    "source-map-support": "^0.5.19"
+    "source-map-support": "^0.5.19",
+    "tiny-node-logger": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^16.7.10",
@@ -21,6 +22,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "start": "node lib/cli.js"
   }
 }

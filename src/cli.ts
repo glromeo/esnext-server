@@ -16,6 +16,9 @@
  ********************************************/
 
 import "source-map-support/register";
+import {log} from "tiny-node-logger";
 import {createServer} from "./server";
+
+log("starting server...");
 
 createServer();
