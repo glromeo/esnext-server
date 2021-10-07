@@ -1,28 +1,63 @@
 {
-  "name": "little-dev-server",
+  "name": "esnext-server",
   "version": "1.0.0",
-  "description": "A simple HTTP/2 server for local development",
+  "description": "Http2 server to power the next generation of Js apps",
   "main": "lib/index.js",
+  "files": [
+    "/cert/codebite.pem",
+    "/cert/localhost.key",
+    "/cert/localhost.crt",
+    "/lib",
+    "/resources"
+  ],
+  "bin": {
+    "esnext": "lib/cli.js"
+  },
+  "keywords": [
+    "http2",
+    "server",
+    "node",
+    "babel"
+  ],
+  "bugs": {
+    "url": "https://github.com/glromeo/esnext-server/issues"
+  },
+  "homepage": "https://github.com/glromeo/esnext-server/tree/master/esnext-server",
   "repository": {
     "type": "git",
-    "url": "https://github.com/glromeo/little-dev-server.git"
+    "url": "https://github.com/glromeo/esnext-server.git"
   },
   "author": "Gianluca Romeo <glromeo@gmail.com>",
   "license": "MIT",
   "private": false,
   "dependencies": {
+    "@types/ws": "^8.2.0",
+    "chalk": "^4.1.2",
+    "chokidar": "^3.5.2",
     "source-map-support": "^0.5.19",
-    "tiny-node-logger": "^2.0.0"
+    "tiny-node-logger": "^2.2.0",
+    "ws": "^8.2.3",
+    "yargs": "^17.1.1"
   },
   "devDependencies": {
     "@types/node": "^16.7.10",
+    "@types/resolve": "^1.20.1",
     "@types/source-map-support": "^0.5.4",
-    "ts-node": "^10.2.1",
+    "@types/yargs": "^17.0.3",
+    "mocha-toolkit": "^1.0.4",
     "typescript": "^4.4.2"
   },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "start": "node lib/cli.js"
+    "start": "node lib/cli.js",
+    "mocha": "c8 mocha",
+    "test": "c8 mocha test/**/*.test.ts",
+    "coverage": "c8 report --reporter=text-lcov | coveralls"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register"
+    ]
   }
 }
