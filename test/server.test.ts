@@ -4,10 +4,11 @@ import log from "tiny-node-logger";
 import {configure, useFixture} from "./fixture";
 import {Agent} from "https";
 import * as http2 from "http2";
+import {ClientHttp2Session} from "http2";
 import {readFileSync} from "fs";
 import {contentText} from "../src/utils/content-utils";
 import {useMemo} from "../src/utils/use-memo";
-import {ClientHttp2Session} from "http2";
+import {ServerContext} from "../src/server";
 
 describe("server", function () {
 
@@ -76,7 +77,7 @@ describe("server", function () {
 
     describe("basic http functionality", function () {
 
-        let runtime, module, server, baseurl;
+        let runtime: ServerContext, module, server, baseurl;
 
         before(async function () {
             const config = useFixture("server/http");
@@ -117,7 +118,7 @@ describe("server", function () {
 
     describe("basic https functionality", function () {
 
-        let runtime, module, server, baseurl;
+        let runtime: ServerContext, module, server, baseurl;
 
         before(async function () {
             const config = useFixture("server/https");
@@ -157,9 +158,9 @@ describe("server", function () {
         });
     });
 
-    describe("basic http2 functionality (over SSL)", function () {
+    describe("basic http2 functionality", function () {
 
-        let runtime, module, server, baseurl;
+        let runtime: ServerContext, module, server, baseurl;
 
         before(async function () {
             useFixture("server/http2");
@@ -174,9 +175,9 @@ describe("server", function () {
             await runtime.shutdown();
         });
 
-        it("the server was started using http2 module", function () {
+        it("the server was started on localhost using http2 module", function () {
             expect(module).eq(require("http2"));
-            expect(baseurl).eq("https://0.0.0.0:4002");
+            expect(baseurl).eq("https://localhost:4002");
         });
 
         it("the server can handle a GET", async function () {
@@ -200,7 +201,7 @@ describe("server", function () {
 
         it("the server can do http2 connect", async function () {
 
-            const client = http2.connect(`${baseurl}`, options);
+            const client = http2.connect(`${baseurl}/`, options);
 
             await Promise.all([
                 new Promise<void>(resolve => {
@@ -237,10 +238,33 @@ describe("server", function () {
 
             await new Promise<void>(resolve => client.close(resolve));
         });
+    });
+
+    describe("advanced http2 functionality", function () {
+
+        let runtime: ServerContext, module, server, baseurl;
+
+        before(async function () {
+            useFixture("server/http2");
+            const {startServer} = await import("../src/server");
+            runtime = await startServer(configure({config: "insecure.config.js"}));
+            module = runtime.module;
+            server = runtime.server;
+            baseurl = runtime.address;
+        });
+
+        after(async function () {
+            await runtime.shutdown();
+        });
+
+        it("the server was started using http2 module", function () {
+            expect(module).eq(require("http2"));
+            expect(baseurl).eq("http://0.0.0.0:4001");
+        });
 
         it("can start/stop a server with pending connections", async () => {
 
-            const client:ClientHttp2Session = http2.connect(`${baseurl}`, options);
+            const client: ClientHttp2Session = http2.connect(`${baseurl}`, options);
 
             const destroyed = new Promise<void>(resolve => {
                 // The server pipes what the cliend sends so because the client doesn't send anything

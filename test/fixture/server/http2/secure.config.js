@@ -3,6 +3,7 @@
  */
 module.exports = config => {
     config.server.protocol = "https";
-    config.server.http2 = true;
+    config.server.http2 = "push";
+    config.server.host = "localhost";
     config.server.port = 4002;
 }

@@ -40,7 +40,7 @@ function manageSockets(server: HttpServer | HttpsServer | Http2Server | Http2Sec
         socket.on("close", () => sockets.delete(socket));
     });
 
-    return async () => {
+    return async function (): Promise<void> {
         if (sockets.size > 0) {
             log.debug(`destroying ${sockets.size} pending socket...`);
             for (const socket of sockets) {
@@ -92,19 +92,23 @@ export async function startServer(config: Config): Promise<ServerContext> {
     const address = `${protocol}://${host}:${port}`;
     log.info(`server started on ${address}`);
 
-    const destroySockets = manageSockets(server);
+    const flushSockets = manageSockets(server);
 
-    async function shutdown(this: ServerContext) {
-        log.info("shutting down...");
-        const serverClosed = new Promise(resolve => server.close(resolve));
-        const watcherClosed = watcher.close();
-        const socketsDestroyed = destroySockets();
-        await Promise.all([
-            serverClosed,
-            watcherClosed,
-            socketsDestroyed
-        ]);
-        log.info("server closed");
+    let closed: Promise<void> | undefined;
+
+    async function shutdown(): Promise<void> {
+        return closed ?? (closed = (async () => {
+            log.info("shutting down...");
+            const serverClosed = new Promise(resolve => server.close(resolve));
+            const watcherClosed = watcher.close();
+            const socketsFlushed = flushSockets();
+            await Promise.all([
+                serverClosed,
+                watcherClosed,
+                socketsFlushed
+            ]);
+            log.info("server closed");
+        })());
     }
 
     return {
