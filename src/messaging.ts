@@ -5,7 +5,9 @@ import {IncomingMessage} from "http";
 import {Socket} from "net";
 import chalk from "chalk";
 import log from "tiny-node-logger";
-import WebSocket from "ws";
+import WebSocket, {RawData} from "ws";
+import {useWatcher} from "./watcher";
+import {FSWatcher} from "chokidar";
 
 export type Message = { type: string, data?: any };
 export type MessageCallback = (data: any, send: SendMessage) => void;
@@ -17,6 +19,12 @@ type UpgradeHandler = (request: IncomingMessage, socket: Socket, head: Buffer) =
 export type Messaging = UpgradeHandler & {
     on: OnMessage
     broadcast: SendMessage
+}
+
+export type MessagingContext = { on: OnMessage, broadcast: SendMessage, config: Config, watcher: FSWatcher };
+export type MessagingPlugin = (messagingContext: MessagingContext) => void;
+export type MessagingConfig = {
+    plugins?: MessagingPlugin[]
 }
 
 export const useMessaging = useMemo<Config, Messaging>(config => {
@@ -56,9 +64,9 @@ export const useMessaging = useMemo<Config, Messaging>(config => {
             sockets.delete(ws);
         });
 
-        ws.on("message", (message: string) => {
-            const {type, data}: Message = message[0] === "{" ? JSON.parse(message) : {type: message};
-            if (callbacks.has(type)) for (const callback of callbacks.get(type)!) {
+        ws.on("message", (payload: RawData) => {
+            const {type, data}: Message = JSON.parse(String(payload));
+            for (const callback of callbacks.get(type) ?? []) {
                 callback(data, send);
             }
         });
@@ -83,6 +91,14 @@ export const useMessaging = useMemo<Config, Messaging>(config => {
             wss.handleUpgrade(request, socket, head, client => wss.emit("open", client, request));
             log.info("websocket ready");
         }
+    }
+
+    const watcher = useWatcher(config);
+
+    for (const plugin of config.messaging?.plugins ?? []) try {
+        plugin({on, broadcast, config, watcher});
+    } catch(e) {
+        log.error("failed to load messaging plugin", e);
     }
 
     return Object.assign(handleUpgrade, {

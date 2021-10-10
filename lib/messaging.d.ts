@@ -2,6 +2,7 @@
 import { Config } from "./configure";
 import { IncomingMessage } from "http";
 import { Socket } from "net";
+import { FSWatcher } from "chokidar";
 export declare type Message = {
     type: string;
     data?: any;
@@ -13,6 +14,16 @@ declare type UpgradeHandler = (request: IncomingMessage, socket: Socket, head: B
 export declare type Messaging = UpgradeHandler & {
     on: OnMessage;
     broadcast: SendMessage;
+};
+export declare type MessagingContext = {
+    on: OnMessage;
+    broadcast: SendMessage;
+    config: Config;
+    watcher: FSWatcher;
+};
+export declare type MessagingPlugin = (messagingContext: MessagingContext) => void;
+export declare type MessagingConfig = {
+    plugins?: MessagingPlugin[];
 };
 export declare const useMessaging: (key: Config) => Messaging;
 export {};

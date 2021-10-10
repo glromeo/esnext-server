@@ -90,7 +90,7 @@ export async function startServer(config: Config): Promise<ServerContext> {
     await new Promise<void>(resolve => server.listen(port, host, resolve));
 
     const address = `${protocol}://${host}:${port}`;
-    log.info(`server started on ${address}`);
+    log.info(`server started on ${address.replace("0.0.0.0", "localhost")}`);
 
     const flushSockets = manageSockets(server);
 

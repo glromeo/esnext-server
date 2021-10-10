@@ -5,6 +5,7 @@ import http from "http";
 import http2 from "http2";
 import https from "https";
 import {WatchOptions} from "chokidar";
+import {MessagingConfig} from "./messaging";
 
 export type Args = {
     basedir?: string
@@ -26,7 +27,8 @@ export type Config = {
         http2: "push" | "preload" | false
         options: http.ServerOptions | https.ServerOptions | http2.ServerOptions | http2.SecureServerOptions
     },
-    watcher: WatchOptions
+    watcher: WatchOptions,
+    messaging: MessagingConfig
 }
 
 export function configure(args?: Args): Readonly<Config> {
@@ -42,6 +44,8 @@ export function configure(args?: Args): Readonly<Config> {
         }
     }
 
+    let key: string | undefined, cert: string | undefined;
+
     const defaults: Config = {
         basedir,
         log: {
@@ -54,10 +58,16 @@ export function configure(args?: Args): Readonly<Config> {
             http2: "preload",
             options: {
                 get key() {
-                    return readTextFileSync("cert/localhost.key");
+                    return key ?? readTextFileSync("cert/localhost.key");
+                },
+                set key(value: string) {
+                    key = value;
                 },
                 get cert() {
-                    return readTextFileSync("cert/localhost.crt");
+                    return cert ?? readTextFileSync("cert/localhost.crt");
+                },
+                set cert(value: string) {
+                    cert = value;
                 },
                 allowHTTP1: true
             }
@@ -67,6 +77,9 @@ export function configure(args?: Args): Readonly<Config> {
             atomic: false,
             disableGlobbing: true,
             ignoreInitial: true
+        },
+        messaging: {
+            plugins: []
         }
     };
 

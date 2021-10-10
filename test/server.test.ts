@@ -1,4 +1,4 @@
-import {expect, mockquire} from "mocha-toolkit";
+import {expect, mockquire, unrequire} from "mocha-toolkit";
 import {AddressInfo} from "net";
 import log from "tiny-node-logger";
 import {configure, useFixture} from "./fixture";
@@ -39,6 +39,8 @@ describe("server", function () {
                 }
             })
         });
+
+        unrequire("../src/server");
     });
 
     beforeEach(function () {

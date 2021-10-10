@@ -9,6 +9,7 @@ export type Http2Handler = (request: Http2ServerRequest, response: Http2ServerRe
 export const useHandler = useMemo<Config, HttpHandler | Http2Handler>(config => {
 
     return (req: IncomingMessage, res: ServerResponse) => {
-        throw new Error("not implemented yet");
+        res.write("not implemented yet");
+        res.end();
     };
 });

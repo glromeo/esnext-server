@@ -4,6 +4,7 @@ import http from "http";
 import http2 from "http2";
 import https from "https";
 import { WatchOptions } from "chokidar";
+import { MessagingConfig } from "./messaging";
 export declare type Args = {
     basedir?: string;
     config?: string;
@@ -24,5 +25,6 @@ export declare type Config = {
         options: http.ServerOptions | https.ServerOptions | http2.ServerOptions | http2.SecureServerOptions;
     };
     watcher: WatchOptions;
+    messaging: MessagingConfig;
 };
 export declare function configure(args?: Args): Readonly<Config>;

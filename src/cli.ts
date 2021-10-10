@@ -20,7 +20,7 @@ import log from "tiny-node-logger";
 import yargs from "yargs";
 import {configure} from "./configure";
 import {startServer} from "./server";
-import * as process from "process";
+import process from "process";
 
 const args = yargs
     .scriptName("esnext-server")
@@ -54,7 +54,11 @@ const SHUTDOWN_TIMEOUT = 120000;
 const TERMINATED_BY_CTRL_C = 130;
 const CANNOT_EXECUTE = 126;
 
-startServer(configure(args)).then(runtime => {
+const config = configure(args);
+
+log.level = config.log.level;
+
+startServer(config).then(runtime => {
 
     process.on("unhandledRejection", (reason, p) => {
         log.error("Unhandled Rejection at Promise", p, reason);
