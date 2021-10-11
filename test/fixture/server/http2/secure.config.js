@@ -1,13 +1,16 @@
 const fs = require("fs");
 /**
- * @param {import("../../index").Config} config
+ * @type {import("../../index").Config}
  */
-module.exports = config => {
-    config.server.protocol = "https";
-    config.server.http2 = "push";
-    config.server.host = "localhost";
-    config.server.port = 4002;
-
-    config.server.options.cert = fs.readFileSync("./self-signed.cert", "utf8");
-    config.server.options.key = fs.readFileSync("./self-signed.key", "utf8");
+module.exports = {
+    server: {
+        protocol: "https",
+        http2: "push",
+        host: "localhost",
+        port: 4002,
+        options: {
+            key: fs.readFileSync("./self-signed.key", "utf8"),
+            cert: fs.readFileSync("./self-signed.cert", "utf8")
+        }
+    }
 }

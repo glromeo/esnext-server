@@ -9,25 +9,30 @@ import WebSocket, {RawData} from "ws";
 import {useWatcher} from "./watcher";
 import {FSWatcher} from "chokidar";
 
-export type Message = { type: string, data?: any };
-export type MessageCallback = (data: any, send: SendMessage) => void;
+export type MessagingConfig = {
+    plugins?: MessagingPlugin[]
+}
+export type MessagingPlugin = (messagingContext: MessagingContext) => void;
+export type MessagingContext = { on: OnMessage, broadcast: SendMessage, config: Config, watcher: FSWatcher };
+
 export type OnMessage = (type: string, cb: MessageCallback) => void;
 export type SendMessage = (type: string, data?: any) => void;
 
-type UpgradeHandler = (request: IncomingMessage, socket: Socket, head: Buffer) => void;
+export type Message = { type: string, data?: any };
+export type MessageCallback = (data: any, send: SendMessage) => void;
 
-export type Messaging = UpgradeHandler & {
+export type Messaging = ((request: IncomingMessage, socket: Socket, head: Buffer) => void) & {
     on: OnMessage
     broadcast: SendMessage
 }
 
-export type MessagingContext = { on: OnMessage, broadcast: SendMessage, config: Config, watcher: FSWatcher };
-export type MessagingPlugin = (messagingContext: MessagingContext) => void;
-export type MessagingConfig = {
-    plugins?: MessagingPlugin[]
-}
-
 export const useMessaging = useMemo<Config, Messaging>(config => {
+
+    const {
+        messaging: {
+            plugins = []
+        } = {}
+    } = config;
 
     const sockets = new Set<WebSocket>();
 
@@ -95,7 +100,7 @@ export const useMessaging = useMemo<Config, Messaging>(config => {
 
     const watcher = useWatcher(config);
 
-    for (const plugin of config.messaging?.plugins ?? []) try {
+    for (const plugin of plugins) try {
         plugin({on, broadcast, config, watcher});
     } catch(e) {
         log.error("failed to load messaging plugin", e);

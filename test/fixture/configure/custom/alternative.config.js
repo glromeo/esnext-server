@@ -1,12 +1,8 @@
 /**
- * This example shows how to modify the configuration using spread operators
+ * @type {import("../../index").Config}
  */
-module.exports = config => {
-    return {
-        ...config,
-        log: {
-            ...config.log,
-            level: "trace"
-        }
-    };
-}
+module.exports = {
+    log: {
+        level: "trace"
+    }
+};

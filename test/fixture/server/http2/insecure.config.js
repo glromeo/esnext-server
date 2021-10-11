@@ -1,8 +1,10 @@
 /**
- * @param {import("../../index").Config} config
+ * @type {import("../../index").Config}
  */
-module.exports = config => {
-    config.server.protocol = "http";
-    config.server.http2 = true;
-    config.server.port = 4001;
+module.exports = {
+    server: {
+        protocol: "http",
+        http2: "preload",
+        port: 4001
+    }
 }

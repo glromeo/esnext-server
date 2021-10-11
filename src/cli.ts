@@ -56,7 +56,7 @@ const CANNOT_EXECUTE = 126;
 
 const config = configure(args);
 
-log.level = config.log.level;
+log.level = config.log.level ?? "info";
 
 startServer(config).then(runtime => {
 

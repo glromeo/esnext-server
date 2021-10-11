@@ -10,13 +10,28 @@
 import {Config} from "./configure";
 import {Http2Handler, HttpHandler, useHandler} from "./handler";
 import {useWatcher} from "./watcher";
-import {Server as HttpServer} from "http";
-import {Server as HttpsServer} from "https";
-import {Http2SecureServer, Http2Server} from "http2";
+import {Server as HttpServer, ServerOptions as HttpServerOptions} from "http";
+import {Server as HttpsServer, ServerOptions as HttpsServerOptions} from "https";
+import {
+    Http2SecureServer,
+    Http2Server,
+    SecureServerOptions as Http2SecureServerOptions,
+    ServerOptions as Http2ServerOptions
+} from "http2";
 import {FSWatcher} from "chokidar";
 import {useMessaging} from "./messaging";
 import log from "tiny-node-logger";
 import {Socket} from "net";
+import {readFileSync} from "fs";
+import {resolve} from "path";
+
+export type ServerConfig = {
+    protocol?: "http" | "https"
+    host?: string
+    port?: number
+    http2?: "push" | "preload" | false
+    options?: HttpServerOptions | HttpsServerOptions | Http2ServerOptions | Http2SecureServerOptions
+};
 
 export type Server = HttpServer | HttpsServer | Http2Server | Http2SecureServer;
 export type Handler = HttpHandler | Http2Handler;
@@ -53,6 +68,14 @@ function manageSockets(server: HttpServer | HttpsServer | Http2Server | Http2Sec
     };
 }
 
+export function getKey() {
+    return readFileSync(resolve(__dirname, "../cert/localhost.key"), "utf-8");
+}
+
+export function getCert() {
+    return readFileSync(resolve(__dirname, "../cert/localhost.crt"), "utf-8");
+}
+
 export async function startServer(config: Config): Promise<ServerContext> {
 
     const watcher = useWatcher(config);
@@ -61,27 +84,46 @@ export async function startServer(config: Config): Promise<ServerContext> {
     let module, server: Server;
 
     const {
-        protocol,
-        host,
-        port,
-        options,
-        http2
-    } = config.server;
+        basedir,
+        server: {
+            protocol = "https",
+            host = "0.0.0.0",
+            port = 3000,
+            http2 = "preload",
+            options = {}
+        } = {}
+    } = config;
 
     if (http2) {
         module = require("http2");
         if (protocol === "http") {
-            server = module.createServer(options, handler);
+            server = module.createServer({}, handler);
         } else {
-            server = module.createSecureServer(options, handler);
+            const {
+                key = getKey(),
+                cert = getCert(),
+                allowHTTP1 = true
+            } = options as Http2SecureServerOptions;
+            server = module.createSecureServer({
+                key,
+                cert,
+                allowHTTP1
+            }, handler);
         }
     } else {
         if (protocol === "http") {
             module = require("http");
-            server = module.createServer(options, handler);
+            server = module.createServer({}, handler);
         } else {
             module = require("https");
-            server = module.createServer(options, handler);
+            const {
+                key = getKey(),
+                cert = getCert()
+            } = options as HttpsServerOptions;
+            server = module.createServer({
+                key,
+                cert
+            }, handler);
         }
     }
 

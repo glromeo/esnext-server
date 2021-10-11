@@ -9,6 +9,7 @@ import {readFileSync} from "fs";
 import {contentText} from "../src/utils/content-utils";
 import {useMemo} from "../src/utils/use-memo";
 import {ServerContext} from "../src/server";
+import {resolve} from "path";
 
 describe("server", function () {
 
@@ -19,7 +20,7 @@ describe("server", function () {
         rejectUnauthorized: false
     };
 
-    before(async function () {
+    before(function () {
 
         log.level = "nothing";
 
@@ -140,6 +141,11 @@ describe("server", function () {
             expect(baseurl).eq("https://0.0.0.0:4003");
         });
 
+        it("uses built in key and cert", function () {
+            expect(server.key).eq(readFileSync(resolve(__dirname, "../cert/localhost.key"), "utf-8"));
+            expect(server.cert).eq(readFileSync(resolve(__dirname, "../cert/localhost.crt"), "utf-8"));
+        });
+
         it("the server can handle a GET", async function () {
             const response = await fetch(`${baseurl}/`, {agent: new Agent(options)} as RequestInit);
             expect(response.ok).true;
@@ -180,6 +186,12 @@ describe("server", function () {
         it("the server was started on localhost using http2 module", function () {
             expect(module).eq(require("http2"));
             expect(baseurl).eq("https://localhost:4002");
+        });
+
+        it("uses key and cert specified in the config", function () {
+            const basedir = runtime.config.basedir;
+            expect(server.key).eq(readFileSync(resolve(basedir, "self-signed.key"), "utf-8"));
+            expect(server.cert).eq(readFileSync(resolve(basedir, "self-signed.cert"), "utf-8"));
         });
 
         it("the server can handle a GET", async function () {

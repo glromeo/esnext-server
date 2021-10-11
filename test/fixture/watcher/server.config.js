@@ -1,7 +1,8 @@
 /**
- *
- * @param {Config} config
+ * @type {import("../index").Config}
  */
-module.exports = config => {
-    config.log.level = "debug";
+module.exports = {
+    log: {
+        level: "debug"
+    }
 }

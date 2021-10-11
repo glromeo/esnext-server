@@ -2,14 +2,13 @@ import {configure} from "../src/configure";
 import {sinon} from "mocha-toolkit";
 import {useFixture} from "./fixture";
 import * as path from "path";
-import * as fs from "fs";
 import log from "tiny-node-logger";
 
 describe("configure", function () {
 
     before(function () {
         log.level = "nothing";
-    })
+    });
 
     beforeEach(function () {
         this.cwd = process.cwd();
@@ -56,22 +55,8 @@ describe("configure", function () {
         expect(config.log.level).eq("trace");
     });
 
-    it("certificates are looked up by default in a folder cert in the basedir", function () {
-        useFixture("configure/certificates");
-        const config = configure();
-        expect(config.server.options.key).eq("This is the key");
-        expect(config.server.options.cert).eq("This is the cert");
-    });
-
-    it("...if they aren't found the default ones provided with the server are used", function () {
-        useFixture("configure/default");
-        const config = configure();
-        expect(config.server.options.key).eq(fs.readFileSync(path.resolve(__dirname, "../cert/localhost.key"),"utf-8"));
-        expect(config.server.options.cert).eq(fs.readFileSync(path.resolve(__dirname, "../cert/localhost.crt"),"utf-8"));
-    });
-
     it("failures during configuration stop the process", function () {
-        const stub = sinon.stub(process, 'exit');
+        const stub = sinon.stub(process, "exit");
         useFixture("configure/custom");
         configure({config: "wrong.config.js"});
         expect(process.exit).calledOnce;

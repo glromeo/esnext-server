@@ -1,12 +1,11 @@
-const fs = require("fs");
-
 /**
- * @param {import("../index").Config} config
+ * @type {import("../index").Config}
  */
-module.exports = config => {
-    config.server.protocol = "https";
-    config.server.http2 = "push";
-    config.server.host = "localhost";
-    config.server.port = 8000;
-    config.messaging.plugins = [require("./messaging.plugin")];
-}
+module.exports = {
+    server: {
+        port: 8000
+    },
+    messaging: {
+        plugins: [require("./messaging.plugin")]
+    }
+};
