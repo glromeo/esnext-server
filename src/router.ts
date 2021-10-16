@@ -23,118 +23,100 @@
  *  SOFTWARE.
  */
 
-type Routes = Record<string, RouterNode>;
+import {Handler, HttpVersion, Req, Res} from "./handler";
 
-export type RouterNode = {
+/***********************************************************************************************************************
+ ██████╗  ██████╗ ██╗   ██╗████████╗███████╗██████╗
+ ██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝██╔════╝██╔══██╗
+ ██████╔╝██║   ██║██║   ██║   ██║   █████╗  ██████╔╝
+ ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══╝  ██╔══██╗
+ ██║  ██║╚██████╔╝╚██████╔╝   ██║   ███████╗██║  ██║
+ ╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝
+ ***********************************************************************************************************************/
+
+export type Routes = Record<string, Node>;
+
+export type Node = {
     fragment: string
     children: Routes | null
-    store: Record<string, any> | null
-    variable: PathVar | null
-    wildcard: Record<string, any> | null
+    handlers: Handlers | null
+    variable: Variable | null
+    wildcard: Handlers | null
 }
 
-export type PathVar = {
+export type Handlers = Record<HttpMethod, Handler<HttpVersion>>;
+
+export enum HttpMethod {
+    GET = "GET",
+    POST = "POST",
+    PUT = "PUT",
+    DELETE = "DELETE",
+    HEAD = "HEAD",
+    OPTIONS = "OPTIONS",
+}
+
+export type Variable = {
     name: string
-    child: RouterNode | null
-    store: Record<string, any> | null
-}
-
-function sliceNode(node: RouterNode, fragment: string, index: number): void {
-    const added = {...node, fragment: node.fragment.slice(index)};
-    node.fragment = fragment;
-    node.children = {
-        [added.fragment.charAt(0)]: added
-    }
-    node.store = null;
-    node.variable = null;
-    node.wildcard = null;
-}
-
-function splitNode(node: RouterNode, fragment: string, index: number): RouterNode {
-    const existing = {...node, fragment: node.fragment.slice(index)};
-    const added = emptyNode(fragment.slice(index));
-    node.fragment = node.fragment.slice(0, index);
-    node.children = {
-        [existing.fragment.charAt(0)]: existing,
-        [added.fragment.charAt(0)]: added
-    }
-    node.store = null;
-    node.variable = null;
-    node.wildcard = null;
-    return added;
-}
-
-function emptyNode(fragment: string) {
-    return {
-        fragment,
-        children: null,
-        store: null,
-        variable: null,
-        wildcard: null
-    };
+    child: Node | null
+    handlers: Handlers | null
 }
 
 export class Router {
 
-    rootNode: RouterNode;
+    rootNode: Node;
 
     constructor() {
         this.rootNode = emptyNode("/");
     }
 
-    createStore() {
+    createStore(): Handlers {
         return Object.create(null);
     }
 
-    register(path: string) {
+    register(path: string): Handlers {
 
-        const endsWithWildcard = path.endsWith("*");
-        if (endsWithWildcard) {
+        const isWildcard = path.endsWith("*");
+        if (isWildcard) {
             path = path.slice(0, -1);
         }
 
-        let node: RouterNode | PathVar = this.rootNode;
-
         const regExp = /(?<fragment>\/[^:]*)(?<variable>:[^/]+)?/g;
         let match = regExp.exec(path);
+        let node: Node | Variable = this.rootNode;
         while (match) {
             let {
                 fragment,
                 variable
             } = match.groups!;
 
-            if (fragment) {
-                let j = 0;
-                while (true) {
-                    node = node as RouterNode;
+            if (fragment) for (let l = 0; true; ++l) {
 
-                    if (j === fragment.length) {
-                        if (j < node.fragment.length) sliceNode(node, fragment, j);
-                        break;
+                if (l === fragment.length) {
+                    if (l < node.fragment.length) {
+                        sliceNode(node, fragment, l);
                     }
+                    break;
+                }
 
-                    if (j === node.fragment.length) {
-                        const cc = fragment.charAt(j);
-                        if (node.children === null) {
-                            node.children = Object.create(null) as Routes;
-                        } else if (node.children[cc] !== undefined) {
-                            node = node.children[cc]!;
-                            fragment = fragment.slice(j);
-                            j = 0;
-                            continue;
-                        }
-                        const child = emptyNode(fragment.slice(j));
-                        node.children[cc] = child;
-                        node = child;
-                        break;
+                if (l === node.fragment.length) {
+                    const cc = fragment.charAt(l);
+                    if (node.children === null) {
+                        node.children = Object.create(null) as Routes;
+                    } else if (node.children[cc] !== undefined) {
+                        node = node.children[cc]!;
+                        fragment = fragment.slice(l);
+                        l = 0;
+                        continue;
                     }
+                    const child = emptyNode(fragment.slice(l));
+                    node.children[cc] = child;
+                    node = child;
+                    break;
+                }
 
-                    if (fragment[j] !== node.fragment[j]) {
-                        node = splitNode(node, fragment, j);
-                        break;
-                    }
-
-                    ++j;
+                if (fragment[l] !== node.fragment[l]) {
+                    node = splitNode(node, fragment, l);
+                    break;
                 }
             }
 
@@ -146,7 +128,7 @@ export class Router {
                     node.variable = {
                         name,
                         child: null,
-                        store: null
+                        handlers: null
                     };
                 } else if (node.variable.name !== name) {
                     throw new Error(
@@ -168,19 +150,19 @@ export class Router {
             }
         }
 
-        if (endsWithWildcard) {
-            node = node as RouterNode;
+        if (isWildcard) {
+            node = node as Node;
             if (node.wildcard === null) {
                 node.wildcard = this.createStore();
             }
             return node.wildcard;
         }
 
-        if (node.store === null) {
-            node.store = this.createStore();
+        if (node.handlers === null) {
+            node.handlers = this.createStore();
         }
 
-        return node.store;
+        return node.handlers;
     }
 
     find(url: string) {
@@ -194,15 +176,102 @@ export class Router {
         return matchRoute(url, urlLength, this.rootNode, 0);
     }
 
+    get<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.GET, {value: handler});
+    }
+
+    put<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.PUT, {value: handler});
+    }
+
+    delete<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.DELETE, {value: handler});
+    }
+
+    post<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.POST, {value: handler});
+    }
+
+    head<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.HEAD, {value: handler});
+    }
+
+    options<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.OPTIONS, {value: handler});
+    }
+
+    use<V extends HttpVersion>(path: string, handler: Handler<V>) {
+        Object.defineProperty(this.register(path), HttpMethod.GET, {value: handler});
+        Object.defineProperty(this.register(path), HttpMethod.PUT, {value: handler});
+        Object.defineProperty(this.register(path), HttpMethod.DELETE, {value: handler});
+        Object.defineProperty(this.register(path), HttpMethod.POST, {value: handler});
+        Object.defineProperty(this.register(path), HttpMethod.HEAD, {value: handler});
+        Object.defineProperty(this.register(path), HttpMethod.OPTIONS, {value: handler});
+    }
+
+    route<V extends HttpVersion>(req: Req<V>, res: Res<V>) {
+        const found = req.url && this.find(req.url);
+        if (found) {
+            const {handlers, params} = found;
+            const handler = handlers[req.method as HttpMethod] as Handler<V>;
+            handler(req, res, params);
+        }
+    }
+
     debugTree() {
         return require("object-treeify")(debugNode(this.rootNode)).replace(/^.{3}/gm, "");
     }
 
 }
 
-type PathParams = Record<string, string>;
+function sliceNode(node: Node, fragment: string, index: number): void {
+    const added = {...node, fragment: node.fragment.slice(index)};
+    node.fragment = fragment;
+    node.children = {
+        [added.fragment.charAt(0)]: added
+    };
+    node.handlers = null;
+    node.variable = null;
+    node.wildcard = null;
+}
 
-function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex: number): null | { store: Record<string, any>, params: PathParams } {
+function splitNode(node: Node, fragment: string, index: number): Node {
+    const existing = {...node, fragment: node.fragment.slice(index)};
+    const added = emptyNode(fragment.slice(index));
+    node.fragment = node.fragment.slice(0, index);
+    node.children = {
+        [existing.fragment.charAt(0)]: existing,
+        [added.fragment.charAt(0)]: added
+    };
+    node.handlers = null;
+    node.variable = null;
+    node.wildcard = null;
+    return added;
+}
+
+function emptyNode(fragment: string): Node {
+    return {
+        fragment,
+        children: null,
+        handlers: null,
+        variable: null,
+        wildcard: null
+    };
+}
+
+/***********************************************************************************************************************
+ ███╗   ███╗ █████╗ ████████╗ ██████╗██╗  ██╗    ██████╗  ██████╗ ██╗   ██╗████████╗███████╗
+ ████╗ ████║██╔══██╗╚══██╔══╝██╔════╝██║  ██║    ██╔══██╗██╔═══██╗██║   ██║╚══██╔══╝██╔════╝
+ ██╔████╔██║███████║   ██║   ██║     ███████║    ██████╔╝██║   ██║██║   ██║   ██║   █████╗
+ ██║╚██╔╝██║██╔══██║   ██║   ██║     ██╔══██║    ██╔══██╗██║   ██║██║   ██║   ██║   ██╔══╝
+ ██║ ╚═╝ ██║██║  ██║   ██║   ╚██████╗██║  ██║    ██║  ██║╚██████╔╝╚██████╔╝   ██║   ███████╗
+ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝╚═╝  ╚═╝    ╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝
+ ***********************************************************************************************************************/
+
+export type MatchResult = { handlers: Handlers, params: PathVariables };
+export type PathVariables = Record<string, string>;
+
+function matchRoute(url: string, urlLength: number, node: Node, startIndex: number): null | MatchResult {
     const {fragment} = node;
     const fragmentLength = fragment.length;
     const fragmentEndIndex = startIndex + fragmentLength;
@@ -212,8 +281,8 @@ function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex
             return null;
         }
         if (fragmentLength < 15) {
-            for (let i = 1, j = startIndex + 1; i < fragmentLength; ++i, ++j) {
-                if (fragment[i] !== url[j]) {
+            for (let f = 1, u = startIndex + 1; f < fragmentLength; ++f, ++u) {
+                if (fragment[f] !== url[u]) {
                     return null;
                 }
             }
@@ -225,15 +294,15 @@ function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex
     startIndex = fragmentEndIndex;
 
     if (startIndex === urlLength) {
-        if (node.store !== null) {
+        if (node.handlers !== null) {
             return {
-                store: node.store,
+                handlers: node.handlers,
                 params: {}
             };
         }
         if (node.wildcard !== null) {
             return {
-                store: node.wildcard,
+                handlers: node.wildcard,
                 params: {"*": ""}
             };
         }
@@ -262,11 +331,11 @@ function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex
                     return route;
                 }
             }
-        } else if (variable.store !== null) {
-            const params: PathParams = {};
+        } else if (variable.handlers !== null) {
+            const params: PathVariables = {};
             params[variable.name] = url.slice(startIndex, urlLength);
             return {
-                store: variable.store,
+                handlers: variable.handlers,
                 params
             };
         }
@@ -274,7 +343,7 @@ function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex
 
     if (node.wildcard !== null) {
         return {
-            store: node.wildcard,
+            handlers: node.wildcard,
             params: {
                 "*": url.slice(startIndex, urlLength)
             }
@@ -284,14 +353,15 @@ function matchRoute(url: string, urlLength: number, node: RouterNode, startIndex
     return null;
 }
 
-function debugNode(node: RouterNode): any {
-    if (node.store === null && node.children === null) { // Can compress output better
-        if (node.variable === null) { // There is only a wildcard store
+
+function debugNode(node: Node): any {
+    if (node.handlers === null && node.children === null) { // Can compress output better
+        if (node.variable === null) { // There is only a wildcard handlers
             return {[node.fragment + "* (s)"]: null};
         }
 
         if (node.wildcard === null) { // There is only a parametric child
-            if (node.variable.store === null) {
+            if (node.variable.handlers === null) {
                 return {
                     [node.fragment + ":" + node.variable.name]:
                         debugNode(node.variable.child!)
@@ -306,7 +376,7 @@ function debugNode(node: RouterNode): any {
         }
     }
 
-    const childRoutes: Record<string, RouterNode | null> = {};
+    const childRoutes: Record<string, Node | null> = {};
 
     if (node.children !== null) {
         for (const childNode of Object.values(node.children)) {
@@ -316,7 +386,7 @@ function debugNode(node: RouterNode): any {
 
     if (node.variable !== null) {
         const {variable} = node;
-        const label = ":" + variable.name + debugStore(variable.store);
+        const label = ":" + variable.name + debugHandlers(variable.handlers);
 
         childRoutes[label] = variable.child === null
             ? null
@@ -328,10 +398,10 @@ function debugNode(node: RouterNode): any {
     }
 
     return {
-        [node.fragment + debugStore(node.store)]: childRoutes
+        [node.fragment + debugHandlers(node.handlers)]: childRoutes
     };
 }
 
-function debugStore(store: Record<string, any> | null) {
-    return store === null ? "" : " (s)";
+function debugHandlers(handlers: Handlers | null) {
+    return handlers === null ? "" : " (s)";
 }

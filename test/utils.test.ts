@@ -4,6 +4,7 @@ import {useMemo} from "../src/utils/use-memo";
 import {expect, sinon} from "mocha-toolkit";
 import {arrayMerge} from "../src/utils/array-merge";
 import {MultiMap} from "../src/utils/multi-map";
+import {contentType} from "../src/utils/mime-types";
 
 describe("utils", function () {
 
@@ -30,7 +31,7 @@ describe("utils", function () {
             const memo = useMemo(fn);
             memo(0);
             memo(0);
-            expect(fn).to.calledOnce;
+            expect(fn).calledOnce;
         });
 
         it("based on strict equality (===)", function () {
@@ -38,7 +39,7 @@ describe("utils", function () {
             const memo = useMemo(fn);
             memo([0]);
             memo([0]);
-            expect(fn).to.calledTwice;
+            expect(fn).calledTwice;
         });
 
         it("unless the argument is different", function () {
@@ -48,7 +49,7 @@ describe("utils", function () {
             memo("0");
             memo(0);
             memo("0");
-            expect(fn).to.calledTwice;
+            expect(fn).calledTwice;
         });
     });
 
@@ -83,4 +84,30 @@ describe("utils", function () {
             expect(map.get("alpha").size).eq(1);
         });
     });
+
+    describe("mime types", function () {
+
+        it("lookup by plain ext without .", function () {
+            expect(contentType("js")).eq("application/javascript; charset=UTF-8");
+            expect(contentType()).undefined;
+        });
+
+        it(". is supported but discouraged", function () {
+            expect(contentType(".js")).eq("application/javascript; charset=UTF-8");
+        });
+
+        it("supports ts, tsx and jsx", function () {
+            expect(contentType("ts")).eq("application/x-typescript; charset=UTF-8");
+            expect(contentType("tsx")).eq("application/x-typescript; charset=UTF-8");
+            expect(contentType("jsx")).eq("application/javascript; charset=UTF-8");
+        });
+
+        it("can lookup by full filename (no urls!)", function () {
+            expect(contentType("path/file.html")).eq("text/html; charset=UTF-8");
+            expect(contentType("path/file.html?q=v")).undefined;
+            expect(contentType("path/file")).undefined;
+        });
+
+    });
+
 });

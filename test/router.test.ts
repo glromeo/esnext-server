@@ -29,15 +29,15 @@ import {Router} from "../src/router";
 function createRouter(paths) {
     const router = new Router();
     for (const path of paths) {
-        const store = router.register(path);
-        store.path = path;
+        const handlers = router.register(path);
+        (handlers as any).path = path;
     }
     return router;
 }
 
 function expectedRoute(path, params = {}) {
     return {
-        store: Object.assign(Object.create(null), {path}),
+        handlers: Object.assign(Object.create(null), {path}),
         params,
     };
 }
@@ -46,7 +46,7 @@ describe("router", function () {
 
     describe(".register()", () => {
 
-        it("returns the store created by the storeFactory (default storeFactory)", () => {
+        it("returns the handlers store", () => {
             const router = new Router();
 
             const rootStore = router.register("/");
@@ -59,27 +59,6 @@ describe("router", function () {
 
             const staticStore = router.register("/static/*");
             assert.deepEqual(staticStore, Object.create(null));
-            assert.equal(router.register("/static/*"), staticStore);
-
-            assert.notEqual(rootStore, userStore);
-            assert.notEqual(userStore, staticStore);
-        });
-
-        it("returns the store created by the storeFactory (custom storeFactory)", () => {
-            const router = new Router();
-
-            router.createStore = () => Symbol("route");
-
-            const rootStore = router.register("/");
-            assert.equal(typeof rootStore, "symbol");
-            assert.equal(router.register("/"), rootStore);
-
-            const userStore = router.register("/user/:id");
-            assert.equal(typeof userStore, "symbol");
-            assert.equal(router.register("/user/:id"), userStore);
-
-            const staticStore = router.register("/static/*");
-            assert.equal(typeof staticStore, "symbol");
             assert.equal(router.register("/static/*"), staticStore);
 
             assert.notEqual(rootStore, userStore);

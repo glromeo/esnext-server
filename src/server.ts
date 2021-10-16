@@ -1,14 +1,5 @@
-/**
- *     _____
- *   / ____|
- *  | (___   ___ _ ____   _____ _ __
- *   \___ \ / _ \ '__\ \ / / _ \ '__|
- *   ____) |  __/ |   \ V /  __/ |
- *  |_____/ \___|_|    \_/ \___|_|
- *
- */
 import {Config} from "./configure";
-import {Http2Handler, HttpHandler, useHandler} from "./handler";
+import {Handler, HttpVersion, useHandler} from "./handler";
 import {useWatcher} from "./watcher";
 import {Server as HttpServer, ServerOptions as HttpServerOptions} from "http";
 import {Server as HttpsServer, ServerOptions as HttpsServerOptions} from "https";
@@ -34,13 +25,12 @@ export type ServerConfig = {
 };
 
 export type Server = HttpServer | HttpsServer | Http2Server | Http2SecureServer;
-export type Handler = HttpHandler | Http2Handler;
 
 export type ServerContext = {
     config: Config
     module: any
     server: Server
-    handler: Handler
+    handler: Handler<HttpVersion>
     watcher: FSWatcher
     address: string
     shutdown: () => Promise<any>
@@ -75,6 +65,15 @@ export function getKey() {
 export function getCert() {
     return readFileSync(resolve(__dirname, "../cert/localhost.crt"), "utf-8");
 }
+
+/***********************************************************************************************************************
+███████╗███████╗██████╗ ██╗   ██╗███████╗██████╗
+██╔════╝██╔════╝██╔══██╗██║   ██║██╔════╝██╔══██╗
+███████╗█████╗  ██████╔╝██║   ██║█████╗  ██████╔╝
+╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██╔══╝  ██╔══██╗
+███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║
+╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝
+***********************************************************************************************************************/
 
 export async function startServer(config: Config): Promise<ServerContext> {
 

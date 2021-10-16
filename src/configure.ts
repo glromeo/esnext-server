@@ -19,7 +19,8 @@ export type Config = {
     }
     server?: ServerConfig,
     watcher?: WatcherConfig,
-    messaging?: MessagingConfig
+    messaging?: MessagingConfig,
+    resources?: string,
 }
 
 export function configure(args?: Args): Readonly<Config> {

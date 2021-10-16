@@ -15,9 +15,6 @@
     "target": "ES2018"
   },
   "ts-node": {
-    "transpileOnly": true,
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
+    "transpileOnly": true
   }
 }

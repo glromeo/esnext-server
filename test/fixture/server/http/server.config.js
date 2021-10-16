@@ -7,4 +7,4 @@ module.exports = {
         http2: false,
         port: 4000
     }
-}
+};
