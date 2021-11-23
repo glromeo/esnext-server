@@ -177,36 +177,37 @@ export class Router {
     }
 
     get<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.GET, {value: handler});
+        this.register(path)[HttpMethod.GET] = handler;
     }
 
     put<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.PUT, {value: handler});
+        this.register(path)[HttpMethod.PUT] = handler;
     }
 
     delete<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.DELETE, {value: handler});
+        this.register(path)[HttpMethod.DELETE] = handler;
     }
 
     post<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.POST, {value: handler});
+        this.register(path)[HttpMethod.POST] = handler;
     }
 
     head<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.HEAD, {value: handler});
+        this.register(path)[HttpMethod.HEAD] = handler;
     }
 
     options<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.OPTIONS, {value: handler});
+        this.register(path)[HttpMethod.OPTIONS] = handler;
     }
 
     use<V extends HttpVersion>(path: string, handler: Handler<V>) {
-        Object.defineProperty(this.register(path), HttpMethod.GET, {value: handler});
-        Object.defineProperty(this.register(path), HttpMethod.PUT, {value: handler});
-        Object.defineProperty(this.register(path), HttpMethod.DELETE, {value: handler});
-        Object.defineProperty(this.register(path), HttpMethod.POST, {value: handler});
-        Object.defineProperty(this.register(path), HttpMethod.HEAD, {value: handler});
-        Object.defineProperty(this.register(path), HttpMethod.OPTIONS, {value: handler});
+        const handlers = this.register(path);
+        handlers[HttpMethod.GET] = handler;
+        handlers[HttpMethod.PUT] = handler;
+        handlers[HttpMethod.DELETE] = handler;
+        handlers[HttpMethod.POST] = handler;
+        handlers[HttpMethod.HEAD] = handler;
+        handlers[HttpMethod.OPTIONS] = handler;
     }
 
     route<V extends HttpVersion>(req: Req<V>, res: Res<V>) {

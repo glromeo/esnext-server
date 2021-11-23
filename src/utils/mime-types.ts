@@ -11,12 +11,18 @@ export const CSS_CONTENT_TYPE = "text/css; charset=UTF-8";
 
 export const mimeTypes: Record<string, MimeType & { contentType: string }> = {};
 
-for (const [contentType, mimeType] of Object.entries(db)) {
-    if (mimeType.extensions) for (const ext of mimeType.extensions) {
-        mimeTypes[ext] = {
-            ...mimeType,
-            contentType: `${contentType}; charset=${mimeType.charset || "UTF-8"}`
-        };
+for (let [contentType, mimeType] of Object.entries(db)) {
+    if (mimeType.extensions) {
+        const charset = mimeType.charset || contentType.startsWith("text/") && "UTF-8";
+        if (charset) {
+            contentType = `${contentType}; charset=${charset}`;
+        }
+        for (const ext of mimeType.extensions) {
+            mimeTypes[ext] = {
+                ...mimeType,
+                contentType
+            };
+        }
     }
 }
 

@@ -3,6 +3,7 @@ import {useMemo} from "../../../src/utils/use-memo";
 import {configure} from "../index";
 import {AddressInfo} from "net";
 import log from "tiny-node-logger";
+import {Req, Res} from "../../../lib/handler";
 
 const keypress = async () => {
     process.stdin.setRawMode(true);
@@ -16,15 +17,15 @@ const keypress = async () => {
     log.level = "debug";
 
     mockquire("../../../src/handler", {
-        useHandler: useMemo(config => function (req, res) {
+        useHandler: useMemo(config => function <V>(req:Req<V>, res:Res<V>) {
             const isHttp2 = parseFloat(req.httpVersion) >= 2;
             if (req.method === "POST") {
-                res.writeHead(200, isHttp2 ? undefined : "OK", {
+                res.writeHead(200, isHttp2 ? "" : "OK", {
                     "content-type": req.headers["content-type"]
                 });
                 req.pipe(res);
             } else {
-                res.writeHead(200, isHttp2 ? undefined : "OK", {
+                res.writeHead(200, isHttp2 ? "" : "OK", {
                     "content-type": "text/plain; charset=UTF-8"
                 });
                 res.end("HELLO");

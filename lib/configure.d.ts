@@ -16,5 +16,6 @@ export declare type Config = {
     server?: ServerConfig;
     watcher?: WatcherConfig;
     messaging?: MessagingConfig;
+    resources?: string;
 };
 export declare function configure(args?: Args): Readonly<Config>;
