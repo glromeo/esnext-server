@@ -19,17 +19,15 @@ describe("configure", function () {
     });
 
     it("can find the config in the current working directory", function () {
-        const {basedir} = useFixture("configure/custom");
+        const {} = useFixture("configure/custom");
         const config = configure();
-        expect(config.basedir).eq(basedir);
-        expect(config.log.level).eq("debug");
+        expect(config.basedir).eq("/custom");
     });
 
     it("otherwise defaults to the base config provided with the server", function () {
         const {basedir} = useFixture("configure/default");
         const config = configure();
         expect(config.basedir).eq(basedir);
-        expect(config.log.level).eq("info");
     });
 
     it("basedir can be changed from current working directory", function () {
@@ -37,7 +35,6 @@ describe("configure", function () {
         const basedir = path.resolve(__dirname, "fixture/configure/custom");
         const config = configure({basedir: basedir});
         expect(config.basedir).eq(basedir);
-        expect(config.log.level).eq("debug");
     });
 
     it("and, also in that case, it looks for the server.config.js otherwise uses the default", function () {
@@ -45,14 +42,12 @@ describe("configure", function () {
         const basedir = path.resolve(__dirname, "fixture/configure/default");
         const config = configure({basedir: basedir});
         expect(config.basedir).eq(basedir);
-        expect(config.log.level).eq("info");
     });
 
     it("config can be used to specify a different configuration file", function () {
         const {basedir} = useFixture("configure/custom");
         const config = configure({config: "alternative.config.js"});
-        expect(config.basedir).eq(basedir);
-        expect(config.log.level).eq("trace");
+        expect(config.basedir).eq("/alternative");
     });
 
     it("failures during configuration stop the process", function () {

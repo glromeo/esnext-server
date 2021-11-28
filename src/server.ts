@@ -1,4 +1,4 @@
-import {Config} from "./configure";
+import {Config, configure} from "./configure";
 import {Handler, HttpVersion, useHandler} from "./handler";
 import {useWatcher} from "./watcher";
 import {Server as HttpServer, ServerOptions as HttpServerOptions} from "http";
@@ -66,16 +66,12 @@ export function getCert() {
     return readFileSync(resolve(__dirname, "../cert/localhost.crt"), "utf-8");
 }
 
-/***********************************************************************************************************************
-███████╗███████╗██████╗ ██╗   ██╗███████╗██████╗
-██╔════╝██╔════╝██╔══██╗██║   ██║██╔════╝██╔══██╗
-███████╗█████╗  ██████╔╝██║   ██║█████╗  ██████╔╝
-╚════██║██╔══╝  ██╔══██╗╚██╗ ██╔╝██╔══╝  ██╔══██╗
-███████║███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║
-╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝
-***********************************************************************************************************************/
-
-export async function startServer(config: Config): Promise<ServerContext> {
+/**
+ * Creates and starts a server given a configuration
+ *
+ * @param config
+ */
+export async function startServer(config: Config = configure()): Promise<ServerContext> {
 
     const watcher = useWatcher(config);
     const handler = useHandler(config);

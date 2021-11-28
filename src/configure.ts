@@ -1,9 +1,10 @@
-import log, {LogLevel} from "tiny-node-logger";
+import log from "tiny-node-logger";
 import fs from "fs";
 import path from "path";
 import {MessagingConfig} from "./messaging";
 import {ServerConfig} from "./server";
 import {WatcherConfig} from "./watcher";
+import {CorsOptions} from "cors";
 
 export type Args = {
     basedir?: string
@@ -14,13 +15,11 @@ export type Args = {
 
 export type Config = {
     basedir: string
-    log: {
-        level?: LogLevel
-    }
     server?: ServerConfig,
     watcher?: WatcherConfig,
     messaging?: MessagingConfig,
     resources?: string,
+    cors?: CorsOptions
 }
 
 export function configure(args?: Args): Readonly<Config> {
@@ -29,10 +28,7 @@ export function configure(args?: Args): Readonly<Config> {
     const config = path.resolve(basedir, args?.config ?? "server.config.js");
 
     const defaults: Config = {
-        basedir,
-        log: {
-            level: "info"
-        }
+        basedir
     };
 
     const paths = () => [

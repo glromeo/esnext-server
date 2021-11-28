@@ -6,6 +6,8 @@ import {PathVariables, Router} from "./router";
 import path from "path";
 import fs from "fs";
 import {contentType} from "./utils/mime-types";
+import log from "tiny-node-logger";
+import chalk from "chalk";
 
 export enum HttpVersion {
     V1 = "http1",
@@ -17,7 +19,10 @@ export type Res<V> = V extends HttpVersion.V1 ? ServerResponse : Http2ServerResp
 
 export type Handler<V = HttpVersion.V1 | HttpVersion.V2> = (req: Req<V>, res: Res<V>, params?: PathVariables) => void;
 
-const {HTTP_STATUS_OK, HTTP_STATUS_NOT_FOUND} = constants;
+const {
+    HTTP_STATUS_OK,
+    HTTP_STATUS_NOT_FOUND
+} = constants;
 
 export const useHandler = useMemo<Config, Handler>(config => {
 
@@ -55,6 +60,7 @@ export const useHandler = useMemo<Config, Handler>(config => {
     });
 
     return (req, res) => {
+        log.debug(req.method, chalk.magenta(req.url));
         router.route(req, res);
     };
 });

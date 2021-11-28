@@ -41,9 +41,19 @@ const args = yargs
         description: "Add a module (plugin) to the server",
         type: "string"
     })
+    .option("verbose", {
+        alias: ["v"],
+        description: "verbose",
+        type: "boolean"
+    })
     .option("debug", {
         alias: ["d"],
         description: "debug",
+        type: "boolean"
+    })
+    .option("quiet", {
+        alias: ["q"],
+        description: "quiet",
         type: "boolean"
     })
     .help()
@@ -54,9 +64,15 @@ const SHUTDOWN_TIMEOUT = 120000;
 const TERMINATED_BY_CTRL_C = 130;
 const CANNOT_EXECUTE = 126;
 
-const config = configure(args);
+if (args.quiet) {
+    log.level = "warn";
+} else if (args.debug) {
+    log.level = "debug";
+} else if (args.verbose) {
+    log.level = "trace";
+}
 
-log.level = config.log.level ?? "info";
+const config = configure(args);
 
 startServer(config).then(runtime => {
 
@@ -85,4 +101,3 @@ startServer(config).then(runtime => {
     log.error("unable to start server", error);
     process.exit(CANNOT_EXECUTE);
 });
-
